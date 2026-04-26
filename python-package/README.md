@@ -15,6 +15,26 @@ The easiest way to understand it is:
 2. move to the document model when you want stable document IDs
 3. move to a persisted document store when your data needs to live in a database
 
+## Why This Exists
+
+Most autocomplete setups eventually turn into infrastructure work: a search server, a hosted index, background sync, operational tuning, and another moving part in your stack.
+
+`query-autocomplete` is for the cases where you already have the text and want useful suggestions directly inside Python. It builds a local prefix index, handles partial words and common typos, and can keep working from an in-memory index, saved artifact, or SQLite-backed document store.
+
+Use it when you want:
+
+- fast local suggestions from your own text
+- typo-tolerant prefix autocomplete without a search service
+- a small Python-native autocomplete layer for apps, docs, internal tools, or prototypes
+- an upgrade path from simple in-memory usage to persisted SQLite storage
+
+It is probably not the right tool when you need:
+
+- distributed search across many machines
+- complex boolean filtering, faceting, or full-text ranking
+- hosted multi-tenant search infrastructure
+- semantic/vector search as the primary retrieval model
+
 ## Install
 
 ```bash
@@ -64,6 +84,56 @@ print(index.suggest("how to build ", topk=5))
 ```
 
 This is still the simplest mode and the best place to begin.
+
+## Realistic Examples
+
+### Search Box Suggestions
+
+```python
+from query_autocomplete import Autocomplete, Document
+
+index = Autocomplete.create([
+    Document(text="wireless mechanical keyboard"),
+    Document(text="wireless mouse for laptop"),
+    Document(text="usb c docking station"),
+    Document(text="noise cancelling headphones"),
+])
+
+def suggest_products(user_input: str) -> list[str]:
+    return index.suggest(user_input, topk=5)
+```
+
+### Documentation Autocomplete
+
+```python
+from query_autocomplete import Autocomplete, Document
+
+index = Autocomplete.create([
+    Document(text="install query-autocomplete with pip"),
+    Document(text="create an in-memory autocomplete index"),
+    Document(text="save and load compiled autocomplete artifacts"),
+    Document(text="use AdaptiveStore with SQLite persistence"),
+])
+
+print(index.suggest("use adap", topk=5))
+```
+
+### Command Palette Suggestions
+
+```python
+from query_autocomplete import Autocomplete, Document
+
+commands = [
+    Document(text="open settings"),
+    Document(text="open keyboard shortcuts"),
+    Document(text="create new project"),
+    Document(text="clear recent files"),
+    Document(text="toggle dark mode"),
+]
+
+palette = Autocomplete.create(commands, quality_profile="code_or_logs")
+print(palette.suggest("open key", topk=3))
+```
 
 ## The Document Model
 

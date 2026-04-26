@@ -1,0 +1,7 @@
+site_name: query-autocomplete
+site_description: Fast autocomplete for any Python app, no search server required.
+repo_url: https://github.com/MarcellM01/query-autocomplete
+theme:
+  name: readthedocs
+nav:
+  - User Guide: index.md
