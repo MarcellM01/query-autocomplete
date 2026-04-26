@@ -1,0 +1,62 @@
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
+[project]
+name = "query-autocomplete"
+version = "0.1.1"
+description = "Fast autocomplete for any Python app, no search server required."
+readme = "README.md"
+requires-python = ">=3.10"
+license = "MIT"
+license-files = ["LICENSE", "THIRD_PARTY_LICENSES.md"]
+authors = [{ name = "Marcell Magda" }]
+keywords = ["autocomplete", "search", "prefix", "retrieval", "nlp", "rag"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Text Processing :: Indexing",
+]
+dependencies = [
+    "marisa-trie",
+    "pypdf",
+    "python-docx",
+]
+
+[project.optional-dependencies]
+dev = [
+    "build",
+    "pytest",
+]
+cli = [
+    "prompt-toolkit",
+]
+chunking = [
+    "pysbd",
+]
+all = [
+    "pypdf",
+    "python-docx",
+    "pysbd",
+]
+
+[project.urls]
+Homepage = "https://github.com/MarcellM01/query-autocomplete"
+Repository = "https://github.com/MarcellM01/query-autocomplete"
+Issues = "https://github.com/MarcellM01/query-autocomplete/issues"
+
+[tool.hatch.build]
+dev-mode-dirs = ["../core/src"]
+
+[tool.hatch.build.targets.wheel]
+only-include = ["query_autocomplete"]
+
+[tool.hatch.build.hooks.custom]
