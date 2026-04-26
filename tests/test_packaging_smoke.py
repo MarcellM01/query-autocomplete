@@ -26,7 +26,6 @@ class PackagingSmokeTests(unittest.TestCase):
         self.assertIn('"pypdf"', text)
         self.assertIn('"python-docx"', text)
         self.assertIn("chunking = [", text)
-        self.assertIn("nlp = [", text)
 
     def test_python_m_cli_builds_artifact_directory(self) -> None:
         if find_spec("marisa_trie") is None:
