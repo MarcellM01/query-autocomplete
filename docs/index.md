@@ -1,6 +1,6 @@
 # query-autocomplete User Guide
 
-`query-autocomplete` builds fast local autocomplete suggestions from your own text. Use it for search boxes, command palettes, document title completion, and typo-tolerant prefix search without running Elasticsearch, Meilisearch, or another search server.
+`query-autocomplete` builds fast local autocomplete suggestions from your own text, PDFs, and DOCX files. Use it for search boxes, command palettes, document title completion, and typo-tolerant prefix search without running Elasticsearch, Meilisearch, Algolia, Typesense, or another search server.
 
 ## Install
 
@@ -42,6 +42,32 @@ Use `AdaptiveStore` when:
 - you need durable source documents
 - you want SQLite-backed persistence
 
+## Cold Starts
+
+Build or load the autocomplete once when your app starts. Do not rebuild it inside every request handler.
+
+Cold starts happen per process: a new process has to load or rebuild the serving index once. After that, suggestions are served from the in-process engine.
+
+For app startup, call `warm()` after loading the index or opening the store:
+
+```python
+from query_autocomplete import Autocomplete
+
+index = Autocomplete.load("my-index")
+index.warm()
+```
+
+For mutable SQLite stores:
+
+```python
+from query_autocomplete import AdaptiveStore
+
+store = AdaptiveStore.open("sqlite:///adaptive.sqlite3")
+store.warm()
+```
+
+`AdaptiveStore.warm()` loads the current compiled serving index if one exists, or rebuilds it from stored documents if needed. If the store has no documents yet, it is a no-op.
+
 ## Quick Start
 
 ```python
@@ -58,6 +84,21 @@ print(index.suggest("how to biuld", topk=5))
 ```
 
 `suggest(...)` returns a plain `list[str]`.
+
+You can also pass file paths directly. `.txt`, `.pdf`, and `.docx` inputs are supported in the base package:
+
+```python
+from pathlib import Path
+from query_autocomplete import Autocomplete
+
+index = Autocomplete.create([
+    Path("docs/handbook.pdf"),
+    Path("docs/release-notes.docx"),
+    Path("docs/faq.txt"),
+])
+
+print(index.suggest("install", topk=5))
+```
 
 ## Documents
 
@@ -105,6 +146,7 @@ Useful methods:
 index = Autocomplete.create(documents)
 index.suggest("how to bui", topk=5)
 index.inspect("how to bui", topk=5)
+index.warm()
 index.save("my-index")
 loaded = Autocomplete.load("my-index")
 docs = index.export_documents()
@@ -165,6 +207,24 @@ AdaptiveStore.open("./adaptive.sqlite3")
 AdaptiveStore.open(":memory:")
 ```
 
+Serving a SQLite-backed autocomplete from FastAPI:
+
+```python
+from fastapi import FastAPI
+from query_autocomplete import AdaptiveStore
+
+app = FastAPI()
+store = AdaptiveStore.open("sqlite:///adaptive.sqlite3")
+
+@app.on_event("startup")
+def startup():
+    store.warm()
+
+@app.get("/autocomplete")
+def autocomplete(q: str):
+    return {"suggestions": store.suggest(q, topk=5)}
+```
+
 Useful methods:
 
 ```python
@@ -177,6 +237,7 @@ result = store.add_documents([
 
 store.suggest("how to bui", topk=5)
 store.inspect("how to bui", topk=5)
+store.warm()
 store.list_documents()
 store.remove_document("deck")
 store.clear()

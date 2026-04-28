@@ -4,9 +4,13 @@
 [![Python](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://github.com/MarcellM01/query-autocomplete)
 [![License](https://img.shields.io/github/license/MarcellM01/query-autocomplete.svg)](https://github.com/MarcellM01/query-autocomplete/blob/main/LICENSE)
 
-Local, typo-tolerant autocomplete without Elasticsearch.
+Local, typo-tolerant autocomplete for Python apps.
 
-Turn your own text into fast local suggestions with a compact prefix index, fuzzy prefix recovery, and a local Kneser-Ney scorer.
+Turn your own text, PDFs, and DOCX files into fast local suggestions with a compact prefix index, fuzzy prefix recovery, and a local Kneser-Ney scorer.
+
+Use it when you want autocomplete without running Elasticsearch, Meilisearch, Algolia, Typesense, or another search service.
+
+Full documentation: https://query-autocomplete.readthedocs.io/en/latest/
 
 The easiest way to understand it is:
 
@@ -65,6 +69,21 @@ print(index.suggest("how to biuld", topk=5))
 
 That is the core experience: give it text, create an in-memory autocomplete, ask for suggestions.
 
+You can also pass file paths directly. `.txt`, `.pdf`, and `.docx` inputs are supported in the base package:
+
+```python
+from pathlib import Path
+from query_autocomplete import Autocomplete
+
+index = Autocomplete.create([
+    Path("docs/handbook.pdf"),
+    Path("docs/release-notes.docx"),
+    Path("docs/faq.txt"),
+])
+
+print(index.suggest("install", topk=5))
+```
+
 ## Slightly Bigger In-Memory Example
 
 Once you want better results, just add more text or bigger documents.
@@ -83,6 +102,27 @@ print(index.suggest("how to build ", topk=5))
 ```
 
 This is still the simplest mode and the best place to begin.
+
+## Use It In An App
+
+Build or load the autocomplete once when your app starts. Do not rebuild it inside every request handler.
+
+```python
+from fastapi import FastAPI
+from query_autocomplete import Autocomplete
+
+app = FastAPI()
+index = Autocomplete.load("my-index")
+
+# Warm before serving traffic so the first user query is not the loader.
+index.warm()
+
+@app.get("/autocomplete")
+def autocomplete(q: str):
+    return {"suggestions": index.suggest(q, topk=5)}
+```
+
+Cold starts are normal for local indexes: a new process has to load the compiled index into memory once. After that, suggestions are served from the in-process engine.
 
 ## Realistic Examples
 
@@ -248,6 +288,7 @@ index = Autocomplete.create([
 index.save("my-index")
 
 loaded = Autocomplete.load("my-index")
+loaded.warm()
 print(loaded.suggest("how to bui", topk=5))
 ```
 
@@ -298,21 +339,44 @@ For a proper persisted mutable document collection, use the SQL-compatible store
 ```python
 from query_autocomplete import AdaptiveStore, Document
 
-store = AdaptiveStore.open("sqlite:///adaptive.sqlite3")
+store = AdaptiveStore.open("sqlite:///autocomplete.sqlite3")
 
 store.add_documents([
     Document(text="how to build a deck", doc_id="deck"),
     Document(text="how to build with python", doc_id="python"),
 ])
 
+# Warm before serving traffic so the first user query is not the builder.
+store.warm()
+
 print(store.suggest("how to bui", topk=5))
 ```
 
+`AdaptiveStore` rebuilds the serving index when documents change. For production-style apps, call `store.warm()` during startup or after ingestion so the first real user request does not pay that cost.
+
 Supported store URLs today:
 
-- `sqlite:///adaptive.sqlite3`
-- `sqlite:////absolute/path/adaptive.sqlite3`
-- a plain path like `"./adaptive.sqlite3"`
+- `sqlite:///autocomplete.sqlite3`
+- `sqlite:////absolute/path/autocomplete.sqlite3`
+- a plain path like `"./autocomplete.sqlite3"`
+
+Serving a SQLite-backed autocomplete from FastAPI:
+
+```python
+from fastapi import FastAPI
+from query_autocomplete import AdaptiveStore
+
+app = FastAPI()
+store = AdaptiveStore.open("sqlite:///autocomplete.sqlite3")
+
+@app.on_event("startup")
+def startup():
+    store.warm()
+
+@app.get("/autocomplete")
+def autocomplete(q: str):
+    return {"suggestions": store.suggest(q, topk=5)}
+```
 
 Each adaptive SQLite database owns one document collection. Name the database file however you want; the documents and current serving index live inside that file.
 

@@ -122,6 +122,13 @@ class PersistenceTests(unittest.TestCase):
             self.assertEqual([doc.doc_id for doc in exported], [doc.doc_id for doc in DOCS])
             self.assertEqual([doc.text for doc in exported], [doc.text for doc in DOCS])
 
+    def test_warm_runs_sample_query(self) -> None:
+        with self._patched_modules():
+            engine = Autocomplete.create(DOCS)
+            with patch.object(engine, "suggest", wraps=engine.suggest) as suggest:
+                engine.warm()
+                suggest.assert_called_once_with("a", topk=1)
+
     @staticmethod
     def _patched_modules():
         return patch.dict(sys.modules, {"marisa_trie": fake_marisa_trie_module()})

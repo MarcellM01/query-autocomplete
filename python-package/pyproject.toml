@@ -4,8 +4,8 @@ build-backend = "hatchling.build"
 
 [project]
 name = "query-autocomplete"
-version = "0.1.1"
-description = "Fast autocomplete for any Python app, no search server required."
+version = "0.1.2"
+description = "Local autocomplete from text, PDFs, and DOCX without Elasticsearch, Meilisearch, Algolia, or Typesense."
 readme = "README.md"
 requires-python = ">=3.10"
 license = "MIT"
@@ -22,6 +22,10 @@ keywords = [
     "nlp",
     "rag",
     "trie",
+    "elasticsearch",
+    "meilisearch",
+    "algolia",
+    "typesense",
 ]
 
 classifiers = [
@@ -63,6 +67,7 @@ all = [
 
 [project.urls]
 Homepage = "https://github.com/MarcellM01/query-autocomplete"
+Documentation = "https://query-autocomplete.readthedocs.io/en/latest/"
 Repository = "https://github.com/MarcellM01/query-autocomplete"
 Issues = "https://github.com/MarcellM01/query-autocomplete/issues"
 

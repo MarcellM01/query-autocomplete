@@ -281,6 +281,15 @@ class AdaptiveStore:
             reranker=reranker,
         )
 
+    def warm(
+        self,
+        sample_query: str = "a",
+        *,
+        topk: int = 1,
+        suggest_config: SuggestConfig | None = None,
+    ) -> None:
+        self.with_suggest_config(suggest_config or self._suggest_config()).warm(sample_query, topk=topk)
+
     def with_suggest_config(self, suggest_config: SuggestConfig) -> AdaptiveAutocomplete:
         return AdaptiveAutocomplete(self, suggest_config=suggest_config)
 
@@ -445,6 +454,11 @@ class AdaptiveAutocomplete:
             suggest_config=self._suggest_config,
             reranker=reranker,
         )
+
+    def warm(self, sample_query: str = "a", *, topk: int = 1) -> None:
+        engine = self._store._compiled_engine()
+        if engine is not None:
+            engine.warm(sample_query, topk=topk)
 
 
 __all__ = ["AdaptiveAutocomplete", "AdaptiveStore", "DeleteResult", "DuplicateDocument", "IngestResult"]
