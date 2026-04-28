@@ -151,6 +151,10 @@ class Autocomplete:
             output_dir = reserve_default_artifact_directory(self._documents) if path is None else resolve_storage_directory(path)
             write_compiled_index(self._compiled, prefix_index=self._prefix_index, output_dir=output_dir)
 
+    def warm(self, sample_query: str = "a", *, topk: int = 1) -> None:
+        """Initialize runtime query structures before serving real traffic."""
+        self.suggest(sample_query, topk=topk)
+
     def suggest(
         self,
         text: str,

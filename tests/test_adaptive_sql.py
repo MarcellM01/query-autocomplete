@@ -171,6 +171,27 @@ class AdaptiveSqlTests(unittest.TestCase):
                     store.suggest("how to bui", topk=5)
                     self.assertEqual(load_binary.call_count, 0)
 
+    def test_warm_builds_and_caches_current_artifacts(self) -> None:
+        with self._patched_modules():
+            with tempfile.TemporaryDirectory() as tmpdir:
+                self._clear_engine_cache()
+                db_path = Path(tmpdir) / "adaptive.sqlite3"
+                store = AdaptiveStore.open(str(db_path))
+                store.add_documents(DOCS)
+                store.warm()
+                self.assertIsNotNone(store._store.load_current_index_record())
+                with patch.object(store._store, "load_compiled_index_binary", wraps=store._store.load_compiled_index_binary) as load_binary:
+                    store.suggest("how to bui", topk=5)
+                    self.assertEqual(load_binary.call_count, 0)
+
+    def test_warm_is_noop_for_empty_store(self) -> None:
+        with self._patched_modules():
+            with tempfile.TemporaryDirectory() as tmpdir:
+                db_path = Path(tmpdir) / "adaptive.sqlite3"
+                store = AdaptiveStore.open(str(db_path))
+                store.warm()
+                self.assertEqual(store.suggest("how to bui", topk=5), [])
+
     def test_compiled_index_is_persisted_as_sql_blobs_after_query(self) -> None:
         with self._patched_modules():
             with tempfile.TemporaryDirectory() as tmpdir:
