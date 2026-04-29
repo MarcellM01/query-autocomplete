@@ -12,6 +12,50 @@ Use it when you want autocomplete without running Elasticsearch, Meilisearch, Al
 
 Full documentation: https://query-autocomplete.readthedocs.io/en/latest/
 
+## Benchmark
+
+`query-autocomplete` runs in single-process Python and still returns
+steady-state suggestions in under 10 ms on this benchmark, without
+Elasticsearch, Meilisearch, Redis, a vector database, or an LLM in the serving
+path.
+
+What is being measured here:
+
+- local in-memory index build
+- first suggestion after a fresh build
+- steady-state suggestion latency from the local prefix/scoring runtime
+- typo-tolerant autocomplete with no external service
+
+The benchmark uses `Salesforce/wikitext` with the `wikitext-2-raw-v1` config
+from Hugging Face. It merges the train, validation, and test splits, then builds
+deterministic corpus slices by word count.
+
+Results below use 5 fresh runs per tier, 128 prompts generated from the same
+WikiText slice, and 5 steady-state passes per run.
+
+**Hardware**
+Apple M4 MacBook, 16 GB RAM  
+macOS  
+Python 3.11  
+Single-process, CPU-only benchmark with no GPU acceleration.
+
+| Corpus | Words | Lines | Build mean (s) | First suggestion mean (ms) | Suggest mean (ms) | Suggest p50 (ms) | Suggest p95 (ms) | Prompts | Runs |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| S | 10,019 | 299 | 0.210 | 1.247 | 1.533 | 0.589 | 5.574 | 128 | 5 |
+| M | 50,079 | 1,132 | 1.116 | 2.388 | 3.147 | 1.149 | 11.751 | 128 | 5 |
+| L | 250,008 | 5,664 | 5.606 | 4.296 | 6.304 | 2.306 | 17.750 | 128 | 5 |
+| XL | 1,000,073 | 21,765 | 27.118 | 5.370 | 9.049 | 6.744 | 22.713 | 128 | 5 |
+
+Corpus tiers target these approximate sizes:
+
+- `S`: 10,000 words
+- `M`: 50,000 words
+- `L`: 250,000 words
+- `XL`: 1,000,000 words
+
+The useful takeaway: for local app autocomplete, you get fast suggestions from
+your own text without standing up search infrastructure.
+
 The easiest way to understand it is:
 
 1. start with one text string in memory
