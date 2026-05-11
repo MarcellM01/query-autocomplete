@@ -675,5 +675,3 @@ Build distributable artifacts:
 cd python-package
 python -m build
 ```
-
-Releases are triggered by pushing a semver tag. The GitHub Actions workflow runs tests, builds the wheel, and publishes to PyPI with trusted publishing.
