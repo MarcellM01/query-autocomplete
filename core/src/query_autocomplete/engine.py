@@ -4,7 +4,7 @@ import threading
 import warnings
 from dataclasses import asdict, replace
 from pathlib import Path
-from typing import Any
+from typing import Any, Iterable
 
 from query_autocomplete.artifacts import (
     ARTIFACT_VERSION,
@@ -34,7 +34,7 @@ def _clamp01(x: float) -> float:
 class Autocomplete:
     def __init__(
         self,
-        documents: list[DocumentLike],
+        documents: Iterable[DocumentLike],
         *,
         build_config: BuildConfig | None = None,
         suggest_config: SuggestConfig | None = None,
@@ -57,7 +57,7 @@ class Autocomplete:
     @classmethod
     def create(
         cls,
-        documents: list[DocumentLike],
+        documents: Iterable[DocumentLike],
         *,
         build_config: BuildConfig | None = None,
         suggest_config: SuggestConfig | None = None,

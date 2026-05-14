@@ -6,6 +6,7 @@ import time
 from collections import OrderedDict
 from dataclasses import dataclass, replace as dataclass_replace
 from sys import getsizeof
+from typing import Iterable
 
 from query_autocomplete.builder import compile_index
 from query_autocomplete.config import BuildConfig, QualityProfile, SuggestConfig, apply_quality_profile
@@ -178,7 +179,7 @@ class AdaptiveStore:
         store.add_documents(documents)
         return store
 
-    def add_documents(self, documents: list[DocumentLike]) -> IngestResult:
+    def add_documents(self, documents: Iterable[DocumentLike]) -> IngestResult:
         with self._lock:
             eligible = [self._prepare_document(doc) for doc in coerce_documents(documents) if doc.text]
             if not eligible:
